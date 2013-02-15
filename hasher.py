@@ -7,8 +7,9 @@ import json
 import string
 
 class DCT (object):
+    #object for python2.7 support
     _dct = dict()
-    
+
     def __init__ (self):
         pass
 
@@ -107,15 +108,6 @@ class System:
         else:
             self.hashObj = hashObj
 
-    def walk (self, path):
-        for root, dirs, files in os.walk(path):
-            for name in files:
-                fullPath = os.path.join(root, name)
-                foo()
-
-    def foo (self):
-        pass
-
     def calcAllHashes (self, path):
         """Calc hashes for all files in path. Return DCT object"""
         if not os.path.isdir(path):
@@ -128,7 +120,7 @@ class System:
                 storage.set(hashValue, name)
         return storage
 
-    def compare (self, path, hashStorage):
+    def comparePathwHashes (self, path, hashStorage):
         """Compare files in path with hashStorage (class DCT) data."""
         if not isinstance(hashStorage, DCT):
             raise Exception ('hashStorage is not DCT storage')
@@ -146,20 +138,21 @@ class System:
                 hashValue = getHash(fullPath)
                 oldName = hashStorage.get(hashValue)
                 if not oldName:
-                    table = {'oldName': oldName, 'hashValue':hashValue}
+                    table = {'oldName': oldName, 'hashValue': hashValue}
                     mes = mesLost.format(**table)
                     print(mes)
                 if oldName != name:
-                    table = {'oldName': oldName, 
+                    table = {'oldName': oldName,
                     'hashValue':hashValue,
                     'newName':name }
                     mes = mesMod.format(**table)
                     print(mes)
         if num < hashStorage.size():
             delta = hashStorage.size() - num
-            print('Num %d files be losted'%delta)
+            print('Num %d files be losted or been modified' %delta)
 
     def copyPath (self, src, dst):
+        """Copy all files from path src to dst"""
         src = os.path.abspath(src)
         dst = os.path.abspath(dst)
         if not os.path.isdir(src):
@@ -177,17 +170,18 @@ class System:
                 self.copyFile(fullPath, newPath)
 
     def copyFile(self, src, dst):
+        """Copy src file to dst"""
         if not os.path.exists(dst):
             shutil.copyfile(src, dst)
-            print('File: %s created'%dst)
+            print('File: %s created' %dst)
         else:
             if self.getSize(src) > self.getSize(dst):
                 shutil.copyfile(src, dst)
-                print('File: %s updated'%dst)
+                print('File: %s updated' %dst)
             else:
                 if self.getHash(src) != self.getHash(dst):
                     shutil.copyfile(src, dst)
-                    print('File: %s updated'%dst)
+                    print('File: %s updated' %dst)
 
     def getHash(self, fileName):
         _hash = self.hashObj()
@@ -201,8 +195,5 @@ class System:
         return os.stat(path).st_size
 
 
-def main():
-    pass
-
 if __name__ == '__main__':
-    main()
+    pass
