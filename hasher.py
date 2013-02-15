@@ -171,6 +171,8 @@ class System:
 
     def copyFile(self, src, dst):
         """Copy src file to dst"""
+        if not os.path.isfile(src):
+            raise Exception('Not a file: %s' %src)
         if not os.path.exists(dst):
             shutil.copyfile(src, dst)
             print('File: %s created' %dst)
@@ -194,6 +196,12 @@ class System:
         """Get File size"""
         return os.stat(path).st_size
 
+
+availableHash = {
+    'md5': MD5Hash,
+    'sha1': SHA1Hash,
+    'sha256': SHA256Hash,
+}
 
 if __name__ == '__main__':
     pass

@@ -1,0 +1,97 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import os
+import sys
+from optparse import OptionParser
+import hasher
+
+aHashTable = hasher.availableHash
+
+def main():
+    usage = "usage: %prog options path1 [path2]"
+    parser = OptionParser(usage=usage)
+    parser.add_option("-f", "--file", dest="filename",
+                  help="write to /read from FILE with hash data", metavar="FILE")
+    parser.add_option("-c", "--copypath",
+                  action="store_true", dest="copypath", default=False,
+                  help="copy all from path1 to path2 with updates")
+    parser.add_option("-C", "--compare",
+                  action="store_true", dest="comparepath", default=False,
+                  help="Compare PATH with data from hash FILE")
+    parser.add_option("-a", "--calchash",
+                  action="store_true", dest="calchash", default=False,
+                  help="Calc hashes for all files in PATH")
+    parser.add_option("-u", "--updatefile",
+                  action="store_true", dest="updatefile", default=False,
+                  help="Copy or update file2(path2) with file1(path1)")
+    parser.add_option("-g", "--gethash",
+                  action="store_true", dest="gethash", default=False,
+                  help="Get hash for one FILE (use with -f)")
+    m = ",".join(aHashTable.keys() )
+    parser.add_option("-m", "--hash", dest="hashmode",
+                  help="Mode of one from hash: %s"%m, metavar="HASH")
+
+    (options, args) = parser.parse_args()
+    if options.hashmode:
+        s = hasher.System(aHashTable[options.hashmode])
+    else:
+        s = hasher.System()
+    if options.copypath:
+        try:
+            if len(args) < 2:
+                raise Exception('Need more arguments')
+            src = args[0]
+            dst = args[1]
+            s.copyPath(src, dst)
+        except Exception as e:
+            sys.stderr.write('Exception: %s\n' %e)
+            sys.exit(-1)
+
+    if options.updatefile:
+        try:
+            if len(args) < 2:
+                raise Exception('Need more arguments')
+            src = args[0]
+            dst = args[1]
+            s.copFile(src, dst)
+        except Exception as e:
+            sys.stderr.write('Exception: %s\n' %e)
+            sys.exit(-1)
+
+    #We need file for all next commands
+    fname = options.filename
+    if not fname:
+        sys.stderr.write('Please enter file\n')
+        sys.exit(-1)
+
+    if options.gethash:
+        print(s.getHash(fname))
+        sys.exit()
+
+    hashStorage = hasher.DCT()
+    if len(args) < 1:
+        sys.stderr.write('Please enter PATH\n')
+        sys.exit(-1)
+    path = args[0]
+    #We need path for all next command
+    if options.comparepath:
+        try:
+            if not os.path.isfile(fname):
+                raise Exception('Bad file %s' %fname)
+            hashStorage.fromJSONFile(fname)
+            s.comparePathwHashes(path, hashStorage)
+        except Exception as e:
+            sys.stderr.write('Exception: %s\n' %e)
+            sys.exit(-1)
+
+    if options.calchash:
+        try:
+            hashStorage= s.calcAllHashes(path)
+            hashStorage.toJSONFile(fname)
+        except Exception as e:
+            sys.stderr.write('Exception: %s\n' %e)
+            sys.exit(-1)
+
+if __name__ == '__main__':
+    main()
