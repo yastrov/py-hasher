@@ -6,59 +6,38 @@ import shutil
 import json
 import string
 
-class DCT (object):
+class DCT(dict):
     #object for python2.7 support
-    _dct = dict()
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
 
-    def __init__ (self):
+    def __init__(self):
         pass
 
-    def set (self, key, value):
+    def set(self, key, value):
         """Set value to dict"""
-        self._dct[key]= value
+        self[key]= value
 
-    def get (self, key):
-        """Get value from dict"""
-        return self._dct.get(key, None)
+    #def get(self, key):
+    #    """Get value from dict"""
+    #    return self.get(key, None)
 
-    def toFile (self, fname, delimeter= ' ', end= '\n'):
+    def toJSONFile(self, fname):
         with open(fname, "wt") as f:
-            f.write(self.__str__() )
-
-    def fromFile (self, fname, delimeter= ' ', end= '\n'):
-        with open(fname, "rt") as f:
-            for line in f:
-                line = line.rstrip([end,])
-                key, value = line.split(delimeter)
-                self.set(key, value)
-
-    def toJSONFile (self, fname):
-        with open(fname, "wt") as f:
-            json.dump(self._dct, f, sort_keys=True,
+            json.dump(self, f, sort_keys=True,
                 indent=4, separators=(',', ': ') )
 
-    def fromJSONFile (self, fname):
+    def fromJSONFile(self, fname):
         with open(fname, "rt") as f:
-            self._dct = json.load(f)
+            self = json.load(f)
+        return self
 
-    def __str__ (self, delimeter= ' ', end= '\n'):
-        s_list = []
-        table = {'del': delimeter, 'end': end}
-        for key in self._dct.keys():
-            table.update({'hash': value, 'fname': self._dct[key]})
-            s= '{fname:s}{del:s}{hash:s}{end:s}'.format(**table)
-            s_list.append(s)
-        return end.join(s_list)
+    def clear(self):
+        self.clear()
 
-    __repr__ = __str__
-
-    def clear (self):
-        self._dct.clear()
-
-    def size (self):
-        return len(self._dct)
-
-    __len__ = size
+    def size(self):
+        return len(self)
 
 
 class BaseHash:
@@ -77,7 +56,7 @@ class BaseHash:
         return self._hash.hexdigest()
 
 
-class SHA1Hash (BaseHash):
+class SHA1Hash(BaseHash):
     def __init__(self, data=None):
         BaseHash.__init__(self, hashlib.sha1, data)
 
@@ -85,7 +64,7 @@ class SHA1Hash (BaseHash):
         return SHA1Hash(data)
 
 
-class SHA256Hash (BaseHash):
+class SHA256Hash(BaseHash):
     def __init__(self, data=None):
         BaseHash.__init__(self, hashlib.sha256, data)
 
@@ -93,7 +72,7 @@ class SHA256Hash (BaseHash):
         return SHA256Hash(data)
 
 
-class MD5Hash (BaseHash):
+class MD5Hash(BaseHash):
     def __init__(self, data=None):
         BaseHash.__init__(self, hashlib.md5, data)
 
@@ -102,56 +81,77 @@ class MD5Hash (BaseHash):
 
 
 class System:
-    def __init__ (self, hashObj=None):
+    def __init__(self, hashObj=None):
         if hashObj == None:
             self.hashObj = MD5Hash
         else:
             self.hashObj = hashObj
 
-    def calcAllHashes (self, path):
+    def calcAllHashes(self, path):
         """Calc hashes for all files in path. Return DCT object"""
+        path = os.path.abspath(path)
         if not os.path.isdir(path):
             raise Exception('Wrong path')
         storage = DCT()
         for root, dirs, files in os.walk(path):
+            relativeDir = string.replace(root, path, "")
+            if relativeDir == "":
+                relativeDir = "root"
+                el = storage.get("root", None)
+                dd = storage
+            else:
+                dd = storage.get("root", None)
+                if isinstance(dd, list):
+                    ddd = {}
+                    dd.append(ddd)
+                    dd = ddd
+                if relativeDir.startswith(os.path.sep):
+                    relativeDir = relativeDir[1:]
+                el = dd.get(relativeDir, None)
+            if not el:
+                el = []
             for name in files:
                 fullPath = os.path.join(root, name)
-                hashValue = getHash(fullPath)
-                storage.set(hashValue, name)
+                #We doing something with file here
+                hashValue = self.getHash(fullPath)
+                d = {"fname": name,
+                "fsize": self.getSize(fullPath),
+                "hash": hashValue,}
+                el.append(d)
+            dd[relativeDir] = el
         return storage
 
-    def comparePathwHashes (self, path, hashStorage):
+    def comparePathwHashes(self, path, hashStorage, prevPath=""):
         """Compare files in path with hashStorage (class DCT) data."""
-        if not isinstance(hashStorage, DCT):
+        if not isinstance(hashStorage, dict):
             raise Exception ('hashStorage is not DCT storage')
-        if hashStorage.size() == 0:
+        if len(hashStorage) == 0:
             raise Exception ('hashStorage has no elements')
+        path = os.path.abspath(path)
         if not os.path.isdir(path):
             raise Exception ('path is no directory')
-        mesMod = '{oldName:s} -> {newName:s} ({hashValue:s})'
         mesLost = '{oldName:s} lost'
-        num = 0
-        for root, dirs, files in os.walk(path):
-            for name in files:
-                fullPath = os.path.join(root, name)
-                num += 1
-                hashValue = getHash(fullPath)
-                oldName = hashStorage.get(hashValue)
-                if not oldName:
-                    table = {'oldName': oldName, 'hashValue': hashValue}
-                    mes = mesLost.format(**table)
-                    print(mes)
-                if oldName != name:
-                    table = {'oldName': oldName,
-                    'hashValue':hashValue,
-                    'newName':name }
-                    mes = mesMod.format(**table)
-                    print(mes)
-        if num < hashStorage.size():
-            delta = hashStorage.size() - num
-            print('Num %d files be losted or been modified' %delta)
+        key = list(hashStorage.keys())[0] #list for Py3.3
+        el = hashStorage.get(key, None)
+        if prevPath == "root":
+            prevPath = ""
+        if key == "fname":
+            relName = el
+            fullPath = os.path.join(path, prevPath)
+            name = os.path.join(fullPath, relName)
+            #Our file info in hashStorage
+            #We have file name here
+            if not os.path.exists(name):
+                print('File %s lost' %relName)
+            oldHashValue = hashStorage.get("hash", None)
+            curHashValue = self.getHash(name)
+            if oldHashValue != curHashValue:
+                print('File %s is not original' %relName)
+        if isinstance(el, list):
+            for e in el:
+                self.comparePathwHashes(path, e, key)
 
-    def copyPath (self, src, dst):
+    def copyPath(self, src, dst):
         """Copy all files from path src to dst"""
         src = os.path.abspath(src)
         dst = os.path.abspath(dst)
@@ -192,7 +192,7 @@ class System:
                 _hash.update(line)
         return _hash.hexdigest()
 
-    def getSize (self, path):
+    def getSize(self, path):
         """Get File size"""
         return os.stat(path).st_size
 
