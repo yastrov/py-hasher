@@ -12,10 +12,10 @@ def main():
     usage = "usage: %prog options path1 [path2]"
     parser = OptionParser(usage=usage)
     parser.add_option("-f", "--file", dest="filename",
-                  help="write to /read from FILE with hash data", metavar="FILE")
+                  help="Write to /read from FILE with hash data", metavar="FILE")
     parser.add_option("-c", "--copypath",
                   action="store_true", dest="copypath", default=False,
-                  help="copy all from path1 to path2 with updates")
+                  help="Copy all from path1 to path2 with updates")
     parser.add_option("-C", "--compare",
                   action="store_true", dest="comparepath", default=False,
                   help="Compare PATH with data from hash FILE")
@@ -24,7 +24,7 @@ def main():
                   help="Calc hashes for all files in PATH")
     parser.add_option("-u", "--updatefile",
                   action="store_true", dest="updatefile", default=False,
-                  help="Copy or update file2(path2) with file1(path1)")
+                  help="Copy or update file2(at path2) with file1(at path1)")
     parser.add_option("-g", "--gethash",
                   action="store_true", dest="gethash", default=False,
                   help="Get hash for one FILE (use with -f)")
@@ -81,6 +81,7 @@ def main():
             if not os.path.isfile(fname):
                 raise Exception('Bad file %s' %fname)
             hashStorage = hashStorage.fromJSONFile(fname)
+            print('If you see no output in command line, it mean that all is well:).\n')
             s.comparePathwHashes(path, hashStorage)
         except Exception as e:
             sys.stderr.write('Exception: %s\n' %e)

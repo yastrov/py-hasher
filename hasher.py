@@ -7,40 +7,29 @@ import json
 import string
 
 class DCT(dict):
-    #object for python2.7 support
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
-    def __init__(self):
-        pass
-
-    def set(self, key, value):
-        """Set value to dict"""
-        self[key]= value
-
-    #def get(self, key):
-    #    """Get value from dict"""
-    #    return self.get(key, None)
+    def safeGet(self, key):
+        """Get value from dict. Return Value or None"""
+        return self.get(key, None)
 
     def toJSONFile(self, fname):
+        """Save to JSON file"""
         with open(fname, "wt") as f:
             json.dump(self, f, sort_keys=True,
                 indent=4, separators=(',', ': ') )
 
     def fromJSONFile(self, fname):
+        """Load from JSON file"""
         with open(fname, "rt") as f:
             self = json.load(f)
         return self
 
-    def clear(self):
-        self.clear()
 
-    def size(self):
-        return len(self)
-
-
-class BaseHash:
+class BaseHash(object):
+    #object for python2.7 support
     def __init__ (self, hashFactory, data=None):
         if hasattr(hashFactory, 'new'):
             self._hash = hashFactory.new()
@@ -80,7 +69,8 @@ class MD5Hash(BaseHash):
         return MD5Hash(data)
 
 
-class System:
+class System(object):
+    #object for python2.7 support
     def __init__(self, hashObj=None):
         if hashObj == None:
             self.hashObj = MD5Hash
@@ -114,10 +104,10 @@ class System:
                 fullPath = os.path.join(root, name)
                 #We doing something with file here
                 hashValue = self.getHash(fullPath)
-                d = {"fname": name,
+                fileInfo = {"fname": name,
                 "fsize": self.getSize(fullPath),
                 "hash": hashValue,}
-                el.append(d)
+                el.append(fileInfo)
             dd[relativeDir] = el
         return storage
 
@@ -141,6 +131,7 @@ class System:
             name = os.path.join(fullPath, relName)
             #Our file info in hashStorage
             #We have file name here
+            #hashStorage equivalent (=) fileInfo dict in here
             if not os.path.exists(name):
                 print('File %s lost' %relName)
             oldHashValue = hashStorage.get("hash", None)
@@ -176,25 +167,26 @@ class System:
         if not os.path.exists(dst):
             shutil.copyfile(src, dst)
             print('File: %s created' %dst)
-        else:
-            if self.getSize(src) > self.getSize(dst):
-                shutil.copyfile(src, dst)
-                print('File: %s updated' %dst)
-            else:
-                if self.getHash(src) != self.getHash(dst):
-                    shutil.copyfile(src, dst)
-                    print('File: %s updated' %dst)
+            return
+        if self.getSize(src) != self.getSize(dst):
+            shutil.copyfile(src, dst)
+            print('File: %s updated' %dst)
+            return
+        if self.getHash(src) != self.getHash(dst):
+            shutil.copyfile(src, dst)
+            print('File: %s updated' %dst)
 
     def getHash(self, fileName):
+        """Get hash of file"""
         _hash = self.hashObj()
         with open(fileName, 'rb') as f:
             for line in f:
                 _hash.update(line)
         return _hash.hexdigest()
 
-    def getSize(self, path):
-        """Get File size"""
-        return os.stat(path).st_size
+    def getSize(self, fileName):
+        """Get file size"""
+        return os.stat(fileName).st_size
 
 
 availableHash = {
