@@ -4,12 +4,12 @@
 
 * Calc Hash for one or all files in path
 * Compare files in path with calculed Hash values
-* Copy (update) path or file with situation, when some files in destination path has defect
+* Copy (update) path or file when some files in destination path has defect
 
 ## Why?
 
 * Not found userfriendly equivalent for myself
-* Test myself in OOP (check myself in the OOP)
+* Test myself in OOP
 
 ## Using
 
@@ -19,4 +19,4 @@ Use option -h for help.
 
 ## P.S.
 
-Sorry, that my English is not well.
+Sorry, my English is not well.

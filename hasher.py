@@ -105,7 +105,7 @@ class System(object):
                 el = []
             for name in files:
                 fullPath = os.path.join(root, name)
-                #We doing something with file here
+                #We are doing something with file here
                 hashValue = self.getHash(fullPath)
                 fileInfo = {"fname": name,
                 "fsize": self.getSize(fullPath),
@@ -132,16 +132,15 @@ class System(object):
             relName = el
             fullPath = os.path.join(path, prevPath)
             name = os.path.join(fullPath, relName)
-            #Our file info in hashStorage
             #We have file name here
-            #hashStorage equivalent (=) fileInfo dict in here
+            #hashStorage equivalent (=) fileInfo dict here
             if not os.path.exists(name):
-                print('File %s lost' %relName)
+                print('File: %s lost' %name)
                 return
             oldHashValue = hashStorage.get("hash", None)
             curHashValue = self.getHash(name)
             if oldHashValue != curHashValue:
-                print('File %s is not original' %relName)
+                print('File: %s is not original' %name)
         if isinstance(el, list):
             for e in el:
                 self.comparePathwHashes(path, e, key)
