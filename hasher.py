@@ -137,6 +137,7 @@ class System(object):
             #hashStorage equivalent (=) fileInfo dict in here
             if not os.path.exists(name):
                 print('File %s lost' %relName)
+                return
             oldHashValue = hashStorage.get("hash", None)
             curHashValue = self.getHash(name)
             if oldHashValue != curHashValue:
