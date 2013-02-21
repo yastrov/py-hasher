@@ -6,6 +6,9 @@ import shutil
 import json
 import string
 
+#Alias for name of the path
+ROOT_DICT_NAME = "root"
+
 class DCT(dict):
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
@@ -86,11 +89,11 @@ class System(object):
         for root, dirs, files in os.walk(path):
             relativeDir = string.replace(root, path, "")
             if relativeDir == "":
-                relativeDir = "root"
-                el = storage.get("root", None)
+                relativeDir = ROOT_DICT_NAME
+                el = storage.get(ROOT_DICT_NAME, None)
                 dd = storage
             else:
-                dd = storage.get("root", None)
+                dd = storage.get(ROOT_DICT_NAME, None)
                 if isinstance(dd, list):
                     ddd = {}
                     dd.append(ddd)
@@ -123,7 +126,7 @@ class System(object):
         mesLost = '{oldName:s} lost'
         key = list(hashStorage.keys())[0] #list for Py3.3
         el = hashStorage.get(key, None)
-        if prevPath == "root":
+        if prevPath == ROOT_DICT_NAME:
             prevPath = ""
         if key == "fname":
             relName = el

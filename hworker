@@ -33,10 +33,10 @@ def main():
                   help="Mode of one from hash: %s"%m, metavar="HASH")
 
     (options, args) = parser.parse_args()
+    hash_type = None
     if options.hashmode:
-        s = hasher.System(aHashTable[options.hashmode])
-    else:
-        s = hasher.System()
+        hash_type = aHashTable.get(options.hashmode, None)
+    s = hasher.System(hash_type)
     if options.copypath:
         try:
             if len(args) < 2:
