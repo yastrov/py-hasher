@@ -124,12 +124,13 @@ class System(object):
         if not os.path.isdir(path):
             raise Exception ('path is no directory')
         mesLost = '{oldName:s} lost'
-        key = list(hashStorage.keys())[0] #list for Py3.3
+        keyList = list(hashStorage.keys()) #list for Py3.3
+        key = keyList[0]
         el = hashStorage.get(key, None)
         if prevPath == ROOT_DICT_NAME:
             prevPath = ""
-        if key == "fname":
-            relName = el
+        if "fname" in keyList:
+            relName = hashStorage.get("fname", None)
             fullPath = os.path.join(path, prevPath)
             name = os.path.join(fullPath, relName)
             #We have file name here
