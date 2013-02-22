@@ -4,7 +4,6 @@ import os
 import hashlib
 import shutil
 import json
-import string
 
 #Alias for name of the path
 ROOT_DICT_NAME = "root"
@@ -87,7 +86,7 @@ class System(object):
             raise Exception('Wrong path')
         storage = DCT()
         for root, dirs, files in os.walk(path):
-            relativeDir = string.replace(root, path, "")
+            relativeDir = root.replace(path, "", 1)
             if relativeDir == "":
                 relativeDir = ROOT_DICT_NAME
                 el = storage.get(ROOT_DICT_NAME, None)
@@ -115,12 +114,11 @@ class System(object):
         return storage
 
     def comparePathwHashes(self, path, hashStorage, prevPath=""):
-        """Compare files in path with hashStorage (class DCT) data."""
+        """Compare files in path (only absolute path) with hashStorage (class DCT) data."""
         if not isinstance(hashStorage, dict):
             raise Exception ('hashStorage is not DCT storage')
         if len(hashStorage) == 0:
             raise Exception ('hashStorage has no elements')
-        path = os.path.abspath(path)
         if not os.path.isdir(path):
             raise Exception ('path is no directory')
         mesLost = '{oldName:s} lost'
@@ -155,7 +153,7 @@ class System(object):
         if not os.path.exists(dst):
             os.mkdir(dst)
         for root, dirs, files in os.walk(src):
-            newDir = string.replace(root, src, dst)
+            newDir = root.replace(src, dst, 1)
             newPath = os.path.join(dst, newDir)
             for name in files:
                 fullPath = os.path.join(root, name)
