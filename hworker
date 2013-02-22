@@ -8,6 +8,54 @@ import hasher
 
 aHashTable = hasher.availableHash
 
+def copyPath(api, options, args):
+    """Recursive copy or update path1 to path2"""
+    if len(args) < 2:
+        raise Exception('Need more arguments.')
+    src = os.path.abspath(args[0])
+    dst = os.path.abspath(args[1])
+    api.copyPath(src, dst)
+
+def updateFile(api, options, args):
+    """Copy or update file from path1 to path2"""
+    if len(args) < 2:
+        raise Exception('Need more arguments.')
+    src = os.path.abspath(args[0])
+    dst = os.path.abspath(args[1])
+    api.copyFile(src, dst)
+
+def getHash(api, options, args):
+    """Get hash of one file"""
+    fname = options.filename
+    if not fname:
+        raise Exception('Please enter file.')
+    print(api.getHash(fname))
+
+def comparePath(api, options, args):
+    fname = options.filename
+    if not fname:
+        raise Exception('Please enter file.')
+    if not os.path.isfile(fname):
+        raise Exception('Bad file: %s' %fname)
+    if len(args) < 1:
+        raise Exception('Please enter PATH.')
+    path = os.path.abspath(args[0])
+    hashStorage = hasher.DCT()
+    hashStorage = hashStorage.fromJSONFile(fname)
+    print('If you see no output in command line, it mean that all is well:).\n')
+    api.comparePathwHashes(path, hashStorage)
+
+def calcHash(api, options, args):
+    fname = options.filename
+    if not fname:
+        raise Exception('Please enter file.')
+    if len(args) < 1:
+        raise Exception('Please enter PATH.')
+    path = os.path.abspath(args[0])
+    hashStorage = hasher.DCT()
+    hashStorage= api.calcAllHashes(path)
+    hashStorage.toJSONFile(fname)
+
 def main():
     usage = "usage: %prog options path1 [path2]"
     parser = OptionParser(usage=usage)
@@ -36,64 +84,32 @@ def main():
     hash_type = None
     if options.hashmode:
         hash_type = aHashTable.get(options.hashmode, None)
-    s = hasher.System(hash_type)
-    if options.copypath:
-        try:
-            if len(args) < 2:
-                raise Exception('Need more arguments. Use -h for help.')
-            src = args[0]
-            dst = args[1]
-            s.copyPath(src, dst)
-        except Exception as e:
-            sys.stderr.write('Exception: %s\n' %e)
-            sys.exit(-1)
+    sAPI = hasher.System(hash_type)
+    try:
+        if options.copypath:
+            copyPath(sAPI, options, args)
+            sys.exit()
 
-    if options.updatefile:
-        try:
-            if len(args) < 2:
-                raise Exception('Need more arguments. Use -h for help.')
-            src = args[0]
-            dst = args[1]
-            s.copFile(src, dst)
-        except Exception as e:
-            sys.stderr.write('Exception: %s\n' %e)
-            sys.exit(-1)
+        if options.updatefile:
+            updateFile(sAPI, options, args)
+            sys.exit()
 
-    #We need file for all next commands
-    fname = options.filename
-    if not fname:
-        sys.stderr.write('Please enter file.\n')
+        if options.gethash:
+            getHash(sAPI, options, args)
+            sys.exit()
+
+        if options.comparepath:
+            comparePath(sAPI, options, args)
+            sys.exit()
+
+        if options.calchash:
+            calcHash(sAPI, options, args)
+            sys.exit()
+
+    except Exception as e:
+        sys.stderr.write('Exception: %s\n' %e)
+        sys.stderr.write('Use option -h for help.\n')
         sys.exit(-1)
-
-    if options.gethash:
-        print(s.getHash(fname))
-        sys.exit()
-
-    hashStorage = hasher.DCT()
-    if len(args) < 1:
-        sys.stderr.write('Please enter PATH.\n')
-        sys.exit(-1)
-    path = args[0]
-    path = os.path.abspath(path)
-    #We need path for all next command
-    if options.comparepath:
-        try:
-            if not os.path.isfile(fname):
-                raise Exception('Bad file: %s' %fname)
-            hashStorage = hashStorage.fromJSONFile(fname)
-            print('If you see no output in command line, it mean that all is well:).\n')
-            s.comparePathwHashes(path, hashStorage)
-        except Exception as e:
-            sys.stderr.write('Exception: %s\n' %e)
-            sys.exit(-1)
-
-    if options.calchash:
-        try:
-            hashStorage= s.calcAllHashes(path)
-            hashStorage.toJSONFile(fname)
-        except Exception as e:
-            sys.stderr.write('Exception: %s\n' %e)
-            sys.exit(-1)
 
 if __name__ == '__main__':
     main()
